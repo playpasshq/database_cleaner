@@ -156,15 +156,6 @@ module DatabaseCleaner
         truncate_tables(tables.select(&filter))
       end
 
-      def database_cleaner_table_cache
-        # AR returns a list of tables without schema but then returns a
-        # migrations table with the schema. There are other problems, too,
-        # with using the base list. If a table exists in multiple schemas
-        # within the search path, truncation without the schema name could
-        # result in confusing, if not unexpected results.
-        @database_cleaner_tables ||= tables_with_schema
-      end
-
       private
 
       # Returns a boolean indicating if the given table has an auto-inc number higher than 0.
@@ -186,17 +177,6 @@ module DatabaseCleaner
         select_value("SELECT true FROM #{table} LIMIT 1;")
       end
 
-      def tables_with_schema
-        rows = select_rows <<-_SQL
-          SELECT schemaname || '.' || tablename
-          FROM pg_tables
-          WHERE
-            tablename !~ '_prt_' AND
-            tablename <> '#{::DatabaseCleaner::ActiveRecord::Base.migration_table_name}' AND
-            schemaname = ANY (current_schemas(false))
-        _SQL
-        rows.collect { |result| result.first }
-      end
     end
   end
 end
